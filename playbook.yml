@@ -1,0 +1,16 @@
+---
+- name: webserver
+  hosts: localhost
+  user: ec2-user
+  sudo: yes
+  tasks:
+        - name: install httpd
+          yum: name=httpd state=installed
+          sudo: yes
+        - name: install apache
+          yum: name=apache state=latest
+          sudo: yes
+        - name: Copy index.html file
+          copy: src=/home/ec2-user/gitrepo/devops-assignment/index.html dest=/var/www/html/index.html
+        - name: start apache
+          service: name=https state=restarted
