@@ -1,0 +1,399 @@
+{
+   "Parameters" : {
+      "KeyName" : {
+            "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance for running Ansible",
+            "Type" : "AWS::EC2::KeyPair::KeyName"
+},
+	"vpcCidr": {
+      "Description": "VPC CIDR block.",
+      "Type": "String",
+      "Default": "10.134.0.0/16",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+    "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+},
+    "publicSubnet1Cidr": {
+      "Description": "Public subnet 1.",
+      "Type": "String",
+      "Default": "10.134.81.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+    "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+},
+      "publicSubnet2Cidr": {
+      "Description": "Public subnet 2.",
+      "Type": "String",
+      "Default": "10.134.82.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+},
+    "privateSubnet1Cidr": {
+      "Description": "Private subnet 1.",
+      "Type": "String",
+      "Default": "10.134.35.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+},
+    "privateSubnet2Cidr": {
+      "Description": "Private subnet 2.",
+      "Description": "Private subnet 2.",
+      "Type": "String",
+      "Default": "10.134.36.0/24",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "Must be a valid IP CIDR range of the form x.x.x.x/x."
+}, 
+    "subnet1AZ": {
+      "Description": "Public Subnet 1 & Private Subnet1 availability zone.",
+      "Type": "AWS::EC2::AvailabilityZone::Name"
+    },
+    "subnet2AZ": {
+      "Description": "Public Subnet 2 & Private Subnet2 availability zone.",
+      "Type": "AWS::EC2::AvailabilityZone::Name" 
+	},
+	      "MYInstanceType": {
+      "Description": "Amazon EC2 instance type for the instance",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro", "t2.small", "t2.medium", "t2.large",
+        "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge",
+        "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge"
+    ]
+},
+	"SshAccessCidr": {
+      "Description": "IP CIDR from where you could SSH into instance",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid CIDR range of the form x.x.x.x/x."
+	  }
+},
+ "Mappings": {
+    "AWSNATAMI": {
+      "eu-central-1"   : {"AMI": "ami-25615740"},
+      "sa-east-1"      : {"AMI": "ami-25615740"},
+      "ap-northeast-1" : {"AMI": "ami-25615740"},
+      "eu-west-1"      : {"AMI": "ami-25615740"},
+      "us-east-1"      : {"AMI": "ami-25615740"},
+	  "us-east-2"      : {"AMI": "ami-25615740"},
+      "us-west-1"      : {"AMI": "ami-25615740"},
+      "us-west-2"      : {"AMI": "ami-25615740"},
+      "ap-southeast-2" : {"AMI": "ami-25615740"},
+      "ap-southeast-1" : {"AMI": "ami-25615740"}
+    }
+ },
+	"Resources": {
+        "MyVPC": {
+            "Type": "AWS::EC2::VPC",
+			"Properties": {
+			"CidrBlock": {"Ref": "vpcCidr"},
+			"InstanceTenancy": "default",
+			"EnableDnsSupport": "true",
+			"EnableDnsHostnames": "true",
+			"Tags": [
+			 {
+            "Key": "Name",
+            "Value": "MYVPC"
+          }
+	  ]
+		}
+},
+        "PublicSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+			"DependsOn": ["MyVPC", "AttachGateway"],
+            "Properties": {
+			"AvailabilityZone": {"Ref" : "subnet1AZ"},
+			"MapPublicIpOnLaunch": "true",
+			"CidrBlock": {"Ref": "publicSubnet1Cidr"},
+			     "VpcId": { "Ref": "MyVPC" },
+        "Tags": [
+          {
+            "Key": "ECS Subnet A",
+            "Value": "PublicSubnet1"
+			}
+        ]				
+	}
+},
+        "PublicSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+			"DependsOn": ["MyVPC", "AttachGateway"],
+            "Properties": {
+			"AvailabilityZone": {"Ref" : "subnet2AZ"},
+			"CidrBlock": { "Ref": "publicSubnet2Cidr" },
+                "VpcId": { "Ref": "MyVPC" },
+		"Tags": [
+          {
+            "Key": "ECS Subnet B",
+            "Value": "PublicSubnet2"
+			}
+        ]		
+    }
+},
+        "PrivateSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+			"DependsOn": ["MyVPC", "AttachGateway"],
+            "Properties": {
+			"AvailabilityZone": {"Ref" : "subnet1AZ"},
+			"CidrBlock": { "Ref": "privateSubnet1Cidr" },
+                "VpcId": { "Ref": "MyVPC" },
+			"Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateSubnet1"
+			}
+		]
+	}
+},
+    "PrivateSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+			"DependsOn": ["MyVPC", "AttachGateway"],
+            "Properties": {
+			"AvailabilityZone": {"Ref" : "subnet2AZ"},
+			"CidrBlock": { "Ref": "privateSubnet2Cidr" },
+                "VpcId": {
+                    "Ref": "MyVPC"
+                },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "PrivateSubnet2"
+			}
+        ]				
+	}
+},
+    "MyInternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+	  "DependsOn": ["MyVPC"],
+      "Properties": {
+	  "Tags": [
+          {
+            "Key": "Name",
+            "Value": "MYIG"
+          }
+        ]
+      }
+},
+	"AttachGateway" : {
+   "Type" : "AWS::EC2::VPCGatewayAttachment",
+   "DependsOn": ["MyVPC", "MyInternetGateway"],
+   "Properties" : {
+      "VpcId" : { "Ref" : "MyVPC" },
+      "InternetGatewayId" : { "Ref" : "MyInternetGateway" }
+   }
+},
+    "MyPublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+	  "DependsOn": ["MyVPC", "AttachGateway"],
+      "Properties": {
+        "VpcId": { "Ref": "MyVPC" }
+      }
+    },
+      "MyPublicRoute" : {
+         "Type" : "AWS::EC2::Route",
+         "DependsOn" : ["MyInternetGateway", "MyPublicRouteTable"],
+         "Properties" : {
+            "RouteTableId" : { "Ref" : "MyPublicRouteTable" },
+            "DestinationCidrBlock" : "0.0.0.0/0",
+            "GatewayId" : { "Ref" : "MyInternetGateway" }
+         }
+},
+	"MySubnetRouteTableAssociationPublic1" : {
+         "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+		 "DependsOn": ["MyPublicRouteTable", "PublicSubnet1"],
+         "Properties" : {
+            "SubnetId" : {"Ref": "PublicSubnet1"},
+            "RouteTableId" : { "Ref" : "MyPublicRouteTable" }
+         }
+},
+	"MySubnetRouteTableAssociationPublic2" : {
+         "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+		 "DependsOn": ["MyPublicRouteTable", "PublicSubnet2"],
+         "Properties" : {
+            "SubnetId" : {"Ref" : "PublicSubnet2"},
+            "RouteTableId" : { "Ref" : "MyPublicRouteTable" }
+         }
+},
+        "PublicSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+			"GroupDescription": "-public-sg",
+            "VpcId": { "Ref": "MyVPC" },
+			"SecurityGroupIngress": [
+		  {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          },
+		  {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {"Ref": "SshAccessCidr"}
+          }
+        ],
+            "SecurityGroupEgress": [{
+            "IpProtocol": "-1",
+            "CidrIp": "0.0.0.0/0"
+          }]
+   }
+},
+        "ApplicationLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+            "Properties": {
+		    "Name":"MyLoadBalancer",
+			"Scheme":"internal",
+			"LoadBalancerAttributes":[
+          {
+            "Key":"idle_timeout.timeout_seconds",
+            "Value":"50"
+          }
+        ],
+			"Subnets":[ {"Ref": "PublicSubnet1"}, {"Ref" : "PublicSubnet2"} ],
+        "SecurityGroups":[
+		{"Ref":"PublicSecurityGroup"}
+        ]
+	}
+},
+	"ApplicationLoadBalancerListener": {
+            "Type": "AWS::ElasticLoadBalancingV2::Listener",
+            "Properties": {
+			"DefaultActions":[
+          {
+            "Type":"forward",
+            "TargetGroupArn":{ "Ref":"TargetGroupLB" }
+          }
+        ],
+        "LoadBalancerArn":{ "Ref":"ApplicationLoadBalancer" },
+        "Port":"80",
+        "Protocol":"HTTP"
+	}
+},
+         "ApplicationLoadBalancerListenerRule": {
+            "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+            "Properties": {
+			"Actions":[{ 
+            "Type":"forward",
+            "TargetGroupArn":{ "Ref":"TargetGroupLB" }
+          }],
+			"Conditions":[{ 
+            "Field":"path-pattern",
+            "Values":[
+              "/"
+            ]
+          }],
+        "ListenerArn":{ "Ref":"ApplicationLoadBalancerListener" },
+        "Priority":1
+	}
+},
+        "TargetGroupLB": {
+            "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties": {
+			"HealthCheckIntervalSeconds":30,
+			"HealthCheckPath":"/",
+			"HealthCheckProtocol":"HTTP",
+			"HealthCheckTimeoutSeconds":5,
+			"HealthyThresholdCount":2,
+			"Matcher" : { "HttpCode" : "200-499" },
+			"Name":"MyLB",
+			"Port":80,	
+			"Protocol":"HTTP",
+			"UnhealthyThresholdCount":2,
+		"VpcId":{
+          "Ref":"MyVPC"
+        }
+	}
+},
+    "ElasticLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+		"Subnets":[ {"Ref": "PrivateSubnet1"}, {"Ref" : "PrivateSubnet2"} ],
+        "CrossZone" : "true",
+        "Listeners" : [ {
+          "LoadBalancerPort" : "80",
+          "InstancePort" : "80",
+          "Protocol" : "HTTP"  } ],
+        "HealthCheck" : {
+          "Target" : "HTTP:80/",
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+    }
+},
+		"Instance" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "KeyName" : { "Ref" : "KeyName" },
+        "InstanceType" : { "Ref" : "MYInstanceType" },
+        "ImageId" : {"Fn::FindInMap": ["AWSNATAMI", {"Ref": "AWS::Region"}, "AMI"]},
+			"SecurityGroupIds" : [{ "Ref" : "PublicSecurityGroup" }],
+			"SubnetId": { "Ref" : "PublicSubnet1" },
+			"BlockDeviceMappings" : [ {
+            "DeviceName" : "/dev/sdk",
+          "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+             "#!/bin/bash -xe\n",
+             "sudo yum install -y aws-cfn-bootstrap\n",
+             "sudo pip install ansible\n",
+		     "sudo yum install -y git\n",
+			 "mkdir gitrepo\n",
+			 "cd gitrepo\n",
+			 "sudo git clone https://github.com/bmalhotragithub/devops-assignment.git\n",
+			 "sudo chmod +x devops-assignment/initialize.sh\n",
+			 "sudo sh devops-assignment/initialize.sh\n","\n"
+        ]]}},
+            "Ebs" : {"VolumeSize" : "100"}},
+			{
+            "DeviceName" : "/dev/sdc",
+            "VirtualName" : "ephemeral0"
+		}]
+  }
+},
+	"MyHostedZone" : {
+		"Type" : "AWS::Route53::HostedZone",
+		"DependsOn"  : "ElasticLoadBalancer",
+		"Properties" : {
+		"Name" : "abcd.com",
+		"VPCs" : [{
+			"VPCId": { "Ref": "MyVPC" },
+			"VPCRegion": "us-east-2"   }]
+	}
+},
+		"myDNSRecord1": {
+			"Type" 		 : "AWS::Route53::RecordSet",
+			"DependsOn"  : ["MyHostedZone", "ApplicationLoadBalancer"],
+			"Properties" : {
+				"HostedZoneName" 		: "abcd.com.",
+				"Name" 				: "alb.abcd.com.",
+				"ResourceRecords"  	: [
+					{ "Fn::GetAtt" 	: [ "ApplicationLoadBalancer", "DNSName" ] }
+				],
+				"Type" 	  : "CNAME",
+				"TTL" 	  : "300",
+				"Comment" : "Private DNS name for ALB"
+			}
+		},
+		"myDNSRecord2": {
+			"Type" 		 : "AWS::Route53::RecordSet",
+			"DependsOn"  : ["MyHostedZone", "ElasticLoadBalancer"],
+			"Properties" : {
+				"HostedZoneName" 		: "abcd.com.",
+				"Name" 				: "elb.abcd.com.",								
+				"ResourceRecords"  	: [
+					{ "Fn::GetAtt" 	: [ "ElasticLoadBalancer", "DNSName" ] }
+				],
+				"Type" 	  : "CNAME",
+				"TTL" 	  : "300",
+				"Comment" : "Private DNS name for ALB"
+			}
+		}
+    }
+}
+
