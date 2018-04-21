@@ -336,20 +336,22 @@
         "ImageId" : {"Fn::FindInMap": ["AWSNATAMI", {"Ref": "AWS::Region"}, "AMI"]},
 			"SecurityGroupIds" : [{ "Ref" : "PublicSecurityGroup" }],
 			"SubnetId": { "Ref" : "PublicSubnet1" },
-			"BlockDeviceMappings" : [ {
-            "DeviceName" : "/dev/sdk",
-          "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
-             "#!/bin/bash -xe\n",
-             "sudo yum install -y aws-cfn-bootstrap\n",
-             "sudo pip install ansible\n",
-		     "sudo yum install -y git\n",
-			 "mkdir gitrepo\n",
-			 "cd gitrepo\n",
-			 "sudo git clone https://github.com/bmalhotragithub/devops-assignment.git\n",
-			 "sudo chmod +x devops-assignment/initialize.sh\n",
-			 "sudo sh devops-assignment/initialize.sh\n","\n"
-        ]]}},
-            "Ebs" : {"VolumeSize" : "100"}},
+				 "UserData"   : {
+								"Fn::Base64" : {
+					"Fn::Join" : [
+					"", 
+					[
+				 "#!/bin/bash -v\n",
+				 "sudo yum install -y aws-cfn-bootstrap \n",
+				 "sudo pip install ansible \n",
+				 "sudo yum install -y git \n",
+				 "sudo git clone https://github.com/bmalhotragithub/devops-assignment.git \n",
+				 "sudo chmod +x /devops-assignment/initialize.sh \n",
+				 "sudo sh /devops-assignment/initialize.sh"
+															]]}},
+				"BlockDeviceMappings" : [ {
+				"DeviceName" : "/dev/sdk",
+				"Ebs" : {"VolumeSize" : "100"}},
 			{
             "DeviceName" : "/dev/sdc",
             "VirtualName" : "ephemeral0"
@@ -396,4 +398,3 @@
 		}
     }
 }
-
