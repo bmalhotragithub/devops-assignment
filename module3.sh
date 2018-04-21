@@ -13,3 +13,10 @@
 		#######Command to create ASG using AMI created above######
 
 #aws autoscaling create-auto-scaling-group --auto-scaling-group-name my-auto-scaling-group --launch-configuration-name (Need to call launch-configuration name ) --load-balancer-names (Need to call running load balancer name) --health-check-type ELB --health-check-grace-period 120
+
+
+		#######Command to create ALB rule for path base routing ##############
+
+#aws elbv2 create-rule --listener-arn listener-arn --priority 10 --conditions Field=path-pattern,Values='/img1/*' --actions Type=forward,TargetGroupArn=targetgroup-arn
+
+#aws elbv2 create-rule --listener-arn listener-arn --priority 10 --conditions Field=path-pattern,Values='/imgi2/*' --actions Type=forward,TargetGroupArn=targetgroup-arn
