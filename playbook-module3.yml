@@ -1,0 +1,11 @@
+---
+- name: webserver
+  hosts: localhost
+  user: ec2-user
+  sudo: yes
+  tasks:
+        - name: Transfer the script
+          copy: src=/devops-assignment/test.sh dest=/home/ec2_user/ mode=0777
+          sudo: yes
+        - name: Execute the script
+          local_action: command sudo sh /home/ec2_user/test.sh
